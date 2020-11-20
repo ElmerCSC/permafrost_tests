@@ -1,0 +1,180 @@
+!echo on
+!Check Keywords "Warn"
+$material="henryproblem.db"
+$elmnttype="p:1 b:3"
+
+Header :: Mesh DB "." "henry"
+
+$p0=101032.0
+$grav=9.81
+$Dm0=1.886E-07
+$materialindex=1
+!$xcl=0.0317
+$xcl=0.0317
+
+Simulation
+  Max Output Level = 3
+  Coordinate System = Cartesian
+  Simulation Type = Transient
+  TimeStepping Method = BDF  
+  BDF Order = 1         
+  Timestep Sizes(1) = 1.0
+  TimeStep Intervals(1) = 180
+  Output Intervals(1) = 1
+ ! TimeStep Intervals(6) = 4 20 32 44 100 300 !350
+!  Output Intervals(6) = 1 1 1 1 1 1 !10
+  Steady State Max Iterations = 100
+  Post File   = "henry1_dt1s_xc0317_10sramp.vtu"
+  Initialize Dirichlet Conditions = Logical False
+  Restart Before Initial Conditions = Logical False
+End
+
+Constants
+  Gravity(4) = 0 -1 0 $grav
+  Reference Temperature = Real 273.15
+  Permafrost DeltaT = Real 1.0
+  Permafrost eps = Real 0.99
+  Reference Pressure = Real $p0
+  Gas Constant = Real 8.3145
+End
+
+Body 1
+  Equation = 1
+  Material = 1
+  Body Force = 1
+  Initial Condition = 1
+End
+
+Material 1
+   Density = 1.0 ! Just a dummy
+   Rock Material File = File $material
+   Rock Material ID = Integer $materialindex
+   Hydraulic Conductivity Limit = Real 1.0E-12 ! m/s
+   !Conductivity Arithmetic Mean Weight = Real 1.0
+   Conductivity Arithmetic Mean Weight = Real 1.0
+   !Dispersion Coefficient = Real 1.0E-06
+   Molecular Diffusion Coefficient = Real $Dm0  
+   Temperature Variable = Equals "PFTemp"
+   Porosity Variable = Equals "Porosity"
+   Salinity Variable = Equals "Salinity"
+   Pressure Variable = Equals "GWPressure"
+   
+End
+
+Equation 1
+  Active Solvers(3) = 1 2 3
+End
+
+Solver 1
+  Equation = "Darcy"
+  !Exec Solver = Never
+  Element = $elmnttype
+  Variable = "GWPressure"
+  Procedure = "ElmerIceSolvers" "PermafrostGroundwaterFlow"  
+  !Rock Material File = File $material
+  !Records in File = Integer 1
+  Initialize Steady State = Logical True
+  Linear System Solver = Direct
+   Linear System Direct Method = MUMPS
+  Nonlinear System Max Iterations = 1
+  Nonlinear System Convergence Tolerance = 1e-04
+  Steady State Convergence Tolerance = 1e-03
+  Exported Variable 1 = -dofs 1 "Porosity"
+  Exported Variable 2 = -IP "Groundwater Flux 1"
+  Exported Variable 3 = -IP "Groundwater Flux 2"  
+End
+
+Solver 2
+  Equation = "PermafrostHTEQ"
+  Exec Solver = Never
+  Variable = "PFTemp"
+  Element = $elmnttype
+  !Exec Solver = "Never"
+  Procedure = "ElmerIceSolvers" "PermaFrostHeatTransfer"
+  !Rock Material File = File $material
+  !Records in File = Integer 1
+  Linear System Solver = Direct
+  Nonlinear System Max Iterations = 1
+  Nonlinear System Convergence Tolerance = 1e-04
+  Steady State Convergence Tolerance = 1e-05
+  Exported Variable 1 = -dofs 1 "PFTemp Velocity"
+  Calculate Velocity = Logical True
+End
+
+Solver 3
+   Equation ="ComputeSalinity"
+  !Exec Solver = Never
+  Variable = "Salinity"
+  Element = $elmnttype
+
+  Nonlinear Timestepping = Logical True
+  Procedure = "ElmerIceSolvers" "PermafrostSoluteTransport"
+
+  Linear System Solver = Direct
+  !Linear System Direct Method = "UMFPACK"
+     Linear System Direct Method = MUMPS
+  Linear System Iterative Method = "BiCGStab"
+  Linear System Convergence Tolerance = 1.0E-08
+  Linear System  Max Iterations = 1100
+  Nonlinear System Max Iterations = 1
+  !Nonlinear System Relaxation Factor = $2.0/3.0
+  Nonlinear System Convergence Tolerance = 1e-05
+  Steady State Convergence Tolerance = 1e-05
+
+End
+
+Initial Condition 1
+  Porosity = Real 0.35
+  Salinity = Variable Coordinate 1
+     Real MATC "xcl*(tx > 2.9)*((tx - 2.9)/0.1)"
+  !Salinity = Variable Coordinate 1
+  !  Real MATC "0.0163 + 0.3333*tx*(0.0338 - 0.0163)"
+!  PFTemp = Real $273.15 + 0.8
+  PFTemp = Real $273.15 + 10.0
+  Groundwater Flux 1 = Real 0.0
+  Groundwater Flux 2 = Real 0.0
+  GWPressure = Real $p0
+  !GWPressure = Variable Coordinate
+  !   Real MATC "500.0*(1.0 - (tx(0)/50.0)) + 10.0*(1.0 - 0.1*tx(1))*1000.0*9.81"
+End
+
+Boundary Condition 1
+  Name = "inflow"
+  Target Boundaries = 1
+  Groundwater Flux = Real 6.6E-02
+  Salinity = Real 0.0
+  !Imposed Salinity = Real 0.0
+  !PFTemp = Real $273.15 + 5.0
+  !PFTemp = Real $273.15 + 10.0
+  !Imposed GWPressure = Real 500.0
+  !Imposed GWPressure = Variable Coordinate 2
+  !   Real MATC "500.0 + 10.0*(1.0 - 0.1*tx)*1000.0*9.81"
+End
+
+Boundary Condition 2
+  Name = "outflow"
+  Target Boundaries = 2
+  !Imposed GWPressure = Real 0.0
+  Imposed GWPressure  = Variable Coordinate 2
+     Real MATC "p0 + 1.0*(1.0 - tx)*(1000.0 + (1743 - 1000.0)*xcl) *9.81"
+  !GWPressure  = Variable Coordinate 2
+  !   Real MATC "0.0 + 1.0*(1.0 - tx)*1000.0*9.81
+  Salinity = Real $xcl
+  !Salinity = Variable Time
+  !   Real MATC "((tx > 10.0) + (tx > 5.0)*(tx <= 10.0)*(tx)/5.0)*xcl"
+End
+
+Boundary Condition 3
+  Name = "walls"
+  Target Boundaries (2) = 3 4
+End
+
+!Boundary Condition 4
+!  Name = "reference pressure"
+!  Target Coordinates (1,2) = 0.0 1.0
+!  GWPressure = Real $p0
+!End
+
+
+
+
