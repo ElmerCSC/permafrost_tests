@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# Elmer result files
+*.vtu
+*.pvtu
+*.result
+*.dat
+*.log
+
