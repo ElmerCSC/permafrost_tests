@@ -5,7 +5,8 @@ $elmnttype="p:1 b:3"
 
 Header :: Mesh DB "." "henry"
 
-$p0=101032.0
+!$p0=101032.0
+$p0=0.0
 $grav=9.81
 $Dm0=1.886E-07
 $materialindex=1
@@ -24,7 +25,7 @@ Simulation
  ! TimeStep Intervals(6) = 4 20 32 44 100 300 !350
 !  Output Intervals(6) = 1 1 1 1 1 1 !10
   Steady State Max Iterations = 100
-  Post File   = "henry1_dt1s_xc0317_10sramp.vtu"
+  Post File   = "henry1_dt1s_xc0317.vtu"
   Initialize Dirichlet Conditions = Logical False
   Restart Before Initial Conditions = Logical False
 End
@@ -116,11 +117,11 @@ Solver 3
   Linear System Iterative Method = "BiCGStab"
   Linear System Convergence Tolerance = 1.0E-08
   Linear System  Max Iterations = 1100
-  Nonlinear System Max Iterations = 1
-  !Nonlinear System Relaxation Factor = $2.0/3.0
+  Nonlinear System Max Iterations = 20
+  Nonlinear System Relaxation Factor = $2.0/3.0
   Nonlinear System Convergence Tolerance = 1e-05
   Steady State Convergence Tolerance = 1e-05
-
+  Calculate Loads = Logical True
 End
 
 Initial Condition 1
@@ -155,11 +156,12 @@ Boundary Condition 2
   Name = "outflow"
   Target Boundaries = 2
   !Imposed GWPressure = Real 0.0
-  Imposed GWPressure  = Variable Coordinate 2
+  !Imposed GWPressure  = Variable Coordinate 2
+  !   Real MATC "p0 + 1.0*(1.0 - tx)*(1000.0 + (1743 - 1000.0)*xcl) *9.81"
+  GWPressure  = Variable Coordinate 2
      Real MATC "p0 + 1.0*(1.0 - tx)*(1000.0 + (1743 - 1000.0)*xcl) *9.81"
-  !GWPressure  = Variable Coordinate 2
-  !   Real MATC "0.0 + 1.0*(1.0 - tx)*1000.0*9.81
   Salinity = Real $xcl
+  Salinity Condition = Equals "Salinity Loads"
   !Salinity = Variable Time
   !   Real MATC "((tx > 10.0) + (tx > 5.0)*(tx <= 10.0)*(tx)/5.0)*xcl"
 End
@@ -167,6 +169,7 @@ End
 Boundary Condition 3
   Name = "walls"
   Target Boundaries (2) = 3 4
+  !Groundwater Flux = Real 6.6E-02
 End
 
 !Boundary Condition 4

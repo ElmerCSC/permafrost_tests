@@ -1,0 +1,106 @@
+!echo on
+!Check Keywords "Warn"
+$Ttop=4.0
+
+Header :: Mesh DB "." "rectangle_fine"
+
+
+Simulation
+  Max Output Level = 3
+  Coordinate System = Cartesian 2D
+  Simulation Type = Transient
+  TimeStepping Method = BDF  
+  BDF Order = 1
+  Timestep Sizes(1) = $3600.0/4.0
+  TimeStep Intervals(1) = $24*4
+  Output Intervals(1) = 4
+  Steady State Max Iterations = 1!00
+  !Post File   = "freeze_20180111_yc000.vtu"
+  Post File   = "freeze_2020_yc000_dt2.vtu"
+  Initialize Dirichlet Conditions = Logical False
+  !Restart Before Initial Conditions = Logical False
+End
+
+Constants
+  Gravity(4) = 0 -1 0 0.0
+  Reference Temperature = Real 273.15
+  Reference Pressure = Real  100132.0
+  Permafrost DeltaT = Real 2.0
+  Permafrost eps = Real 0.99
+End
+
+Body 1
+  Equation = 1
+  Material = 1
+  Body Force = 1
+  Initial Condition = 1
+End
+
+Material 1
+   Density = 1.0 ! Just a dummy
+   Rock Material File = File "water.db"
+   Rock Material ID = Integer 1
+   Dummy Conduct = Real 1.0E-06
+   Hydraulic Conductivity Limit = Real 1.0E-12 ! m/s
+   Conductivity Arithmetic Mean Weight = Real 1.0
+   Porosity Variable = Equals "Porosity"
+   Salinity Variable = Equals "Salinity"
+   Temperature Variable = Equals "PFTemp"
+   Pressure Variable = Equals "GWPressure"
+End
+
+Equation 1
+  Active Solvers(1) = 1
+End
+
+
+Solver 1
+  Equation = "Permafrost"
+  Element = "p:1 b:1"
+  !Exec Solver = Never
+  Variable = "PFTemp"
+  Procedure = "ElmerIceSolvers" "PermaFrostHeatTransfer"
+  !Linear System Solver = Direct
+  !Linear System Direct Method = "umfpack"
+  Linear System Solver = Iterative
+  Linear System Iterative Method  = BiCGStab
+  Linear System Max Iterations = 1000
+  Nonlinear System Convergence Tolerance = 1.0e-06
+  Nonlinear System Max Iterations = 100
+  Nonlinear System Relaxation Factor = $2.0/3.0
+  Linear System Convergence Tolerance = 1e-8
+
+  Output Xi = Logical True
+  !Pressure Variable = String "GWPressure"
+  Exported Variable 1 = -dofs 1 "Porosity"
+  Exported Variable 2 = -dofs 1 "Salinity"
+  Exported Variable 3 = -dofs 1 "GWPressure"
+  !
+  !Groundwater Flux Variable = String "Groundwater Flux"
+End	 
+
+Initial Condition 1
+  Porosity = Real 1.0
+  Salinity = Real 0.0
+  PFTemp = Real $273.15 + Ttop
+  GWPressure = Real 100132.0
+End
+
+Boundary Condition 1
+  Name = "sides"
+  Target Boundaries(2) = 1 2 
+End
+Boundary Condition 2
+  Name = "top"
+  Target Boundaries(1) = 3
+  PFTemp = Real $273.15 + Ttop
+End
+Boundary Condition 3
+  Name = "bottom"
+  Target Boundaries(1) = 4 
+  PFTemp = Real $273.15 - Ttop
+End
+
+
+
+

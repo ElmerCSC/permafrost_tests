@@ -1,0 +1,35 @@
+1         NumberOfRecords
+Water     1
+0.0       Xi0
+1.0       eta0
+1.0       etak
+0.56      ks0th
+0.00      ew
+0.0       bs
+999.9     rhos0
+4207.7    cs0
+0.0       hs0
+0.0       kgwh0_11
+0.0       kgwh0_12
+0.0       kgwh0_13
+0.0       kgwh0_21
+0.0       kgwh0_22
+0.0       kgwh0_23
+0.0       kgwh0_31
+0.0       kgwh0_32
+0.0       kgwh0_33
+0.0       qexp
+0.0       alphaL
+0.0       alphaT
+0.0       RadGen
+1.0 0.0 0.0 0.0 0.0 0.0 acs
+0.0       as0
+1.0 0.0 0.0 0.0 0.0 0.0 aas
+0.0       ks0
+1.0 0.0 0.0 0.0 0.0 0.0 cks
+0.0       Es0
+0.5       nuS0
+0         acsl
+0         aasl
+0         cksl
+
