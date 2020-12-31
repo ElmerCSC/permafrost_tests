@@ -35,6 +35,5 @@
 *.vtu
 *.pvtu
 *.result
-*.dat
 *.log
 
