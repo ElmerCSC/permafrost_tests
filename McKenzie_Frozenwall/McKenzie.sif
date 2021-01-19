@@ -99,7 +99,6 @@ Solver 3
   Element = $elmntstrng
   !Exec Solver = Never
   Variable = "PFTemp"
-  Output Xi = Logical True
   Procedure = "ElmerIceSolvers" "PermaFrostHeatTransfer"
   Output Xi = Logical True
   Linear System Solver = Iterative
